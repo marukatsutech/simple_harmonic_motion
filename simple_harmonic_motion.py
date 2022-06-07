@@ -164,7 +164,7 @@ ax = fig.add_subplot(111)
 
 # Embed a figure in canvas
 canvas = FigureCanvasTkAgg(fig, root)
-canvas.get_tk_widget().pack()
+canvas.get_tk_widget().pack(expand=True, fill='both')
 
 # Animation
 anim = animation.FuncAnimation(fig, update, interval=100)
