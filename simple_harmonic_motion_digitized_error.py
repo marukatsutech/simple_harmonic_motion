@@ -8,13 +8,26 @@ import matplotlib.patches as patches
 import tkinter as tk
 
 
+def change_range_x(value):
+    global x_min, x_max
+    x_max = float(value)
+    ax.set_xlim(x_min, x_max)
+
+
+def change_range_y(value):
+    global tx_step, y_min, y_max
+    y_min = - float(value)
+    y_max = float(value)
+    ax.set_ylim(y_min, y_max)
+    tx_step.set_position([x_min, y_max * 0.95])
+
+
 def change_amp(value):
-    global amplitude, y_ball0, y_ball1, y_ball2, y_dot0, circle
+    global amplitude, y_ball0, y_ball1, y_dot0, circle
     amplitude = float(value)
     print(amplitude)
     y_ball0 = amplitude
     y_ball1 = amplitude
-    y_ball2 = amplitude
     y_dot0 = y_ball0
     update_ball()
     circle.radius = y_ball0
@@ -33,41 +46,24 @@ def change_mass(value):
 
 
 def clear_position():
-    global is_play, cnt, tx_step, y_ball0, y_ball1, y_ball2, v_ball1, v_ball2, cnt2, x_dot0, y_dot0
+    global is_play, cnt, tx_step, y_ball0, y_ball1, v_ball1, x_dot0, y_dot0
     is_play = False
     cnt = 0
-    cnt2 = 0
-    tx_step.set_text("Step=" + str(cnt2))
+    tx_step.set_text("Step=" + str(cnt))
     y_ball0 = amplitude
     y_ball1 = amplitude
-    y_ball2 = amplitude
     v_ball1 = 0.
-    v_ball2 = 0.
     x_dot0 = 0.
     y_dot0 = y_ball0
     update_ball()
 
 
 def update_ball():
-    global y_ball0, y_ball1, y_ball2, ball0, ball1, ball2, x_dot0, y_dot0, line1, line2
+    global y_ball0, y_ball1, ball0, ball1, x_dot0, y_dot0, line1
     ball0.set_center([x_ball0, y_ball0])
     ball1.set_center([x_ball1, y_ball1])
-    ball2.set_center([x_ball2, y_ball2])
     dot0.set_center([x_dot0, y_dot0])
     line1.set_data([x_ball1, x_ball1], [0., y_ball1])
-    line2.set_data([x_ball2, x_ball2], [0., y_ball2])
-
-
-def next_generation_ball2():
-    global y_ball2, v_ball2, flag_ball2
-    if flag_ball2:
-        force = - k * y_ball2
-        a = force / mass
-        v_ball2 = v_ball2 + a
-        flag_ball2 = False
-    else:
-        y_ball2 = y_ball2 + v_ball2
-        flag_ball2 = True
 
 
 def next_generation_ball1():
@@ -80,13 +76,13 @@ def next_generation_ball1():
 
 def next_generation_ball0():
     global y_ball0
-    y_ball0 = amplitude * np.cos(omega * cnt2)
+    y_ball0 = amplitude * np.cos(omega * cnt)
 
 
 def next_generation_dot0():
     global y_dot0, x_dot0
-    y_dot0 = amplitude * np.cos(omega * cnt2)
-    x_dot0 = - amplitude * np.sin(omega * cnt2)
+    y_dot0 = amplitude * np.cos(omega * cnt)
+    x_dot0 = - amplitude * np.sin(omega * cnt)
 
 
 def on_change_window(e):
@@ -103,16 +99,13 @@ def switch():
 
 
 def update(f):
-    global tx_step, cnt, curve0, y_curve0, y_curve1, y_curve2, cnt2
+    global tx_step, cnt, curve0, y_curve0, y_curve1
     if is_play:
-        tx_step.set_text("Step=" + str(cnt2))
+        tx_step.set_text("Step=" + str(cnt))
         cnt += 1
-        if cnt % 2 == 0:
-            cnt2 += 1
-            next_generation_ball1()
         next_generation_dot0()
         next_generation_ball0()
-        next_generation_ball2()
+        next_generation_ball1()
         update_ball()
         y_curve0_roll = np.roll(y_curve0, 1)
         y_curve0 = y_curve0_roll
@@ -122,19 +115,16 @@ def update(f):
         y_curve1 = y_curve1_roll
         y_curve1[1] = y_ball1
         curve1.set_ydata(y_curve1)
-        y_curve2_roll = np.roll(y_curve2, 1)
-        y_curve2 = y_curve2_roll
-        y_curve2[0] = y_ball2
-        curve2.set_ydata(y_curve2)
-        print(y_ball0, y_ball1, y_ball2)
 
 
 # Global variables
 # Coordination
-x_min = -20.
-x_max = 20.
-y_min = -10.
-y_max = 10.
+range_x_init = 10.
+range_y_init = 5.
+x_min = -15.
+x_max = range_x_init
+y_min = - range_y_init
+y_max = range_y_init
 
 # Parameters
 mass = 200.
@@ -144,21 +134,17 @@ k_init = k
 
 omega = np.sqrt(k/mass)
 
-amplitude = 5.
+amplitude = 4.
+x_min = -amplitude * 1.4
 
 x_ball0 = 0.
 y_ball0 = amplitude
 x_dot0 = 0.
 y_dot0 = y_ball0
 
-x_ball1 = -10.
+x_ball1 = - amplitude * 1.2
 y_ball1 = amplitude
 v_ball1 = 0.
-
-x_ball2 = -15.
-y_ball2 = amplitude
-v_ball2 = 0.
-flag_ball2 = True
 
 radius_ball = 0.5
 radius_dot = radius_ball / 2.
@@ -166,7 +152,6 @@ radius_dot = radius_ball / 2.
 # Animation control
 cnt = 0
 is_play = False
-cnt2 = 0
 
 # Generate figure and axes
 fig = Figure()
@@ -193,19 +178,14 @@ ball0 = patches.Circle(xy=(x_ball0, y_ball0), radius=radius_ball, color='blue')
 ax.add_patch(ball0)
 ball1 = patches.Circle(xy=(x_ball1, y_ball1), radius=radius_ball, color='orange')
 ax.add_patch(ball1)
-ball2 = patches.Circle(xy=(x_ball2, y_ball2), radius=radius_ball, color='green')
-ax.add_patch(ball2)
 
 line1, = ax.plot([x_ball1, x_ball1], [0., y_ball1], color='orange')
-line2, = ax.plot([x_ball2, x_ball2], [0., y_ball2], color='green')
 
 x_curve = np.linspace(0, x_max, 500)
 y_curve0 = x_curve * 0.
 curve0, = ax.plot(x_curve, y_curve0, linestyle='-', label="y=A*cos(omega*step)", color='blue')
 y_curve1 = x_curve * 0.
-curve1, = ax.plot(x_curve, y_curve1, linestyle='-', label="Simulation1(calculate a and v in same step)", color='orange')
-y_curve2 = x_curve * 0.
-curve2, = ax.plot(x_curve, y_curve2, linestyle='-', label="Simulation1(calculate a then v)", color='green')
+curve1, = ax.plot(x_curve, y_curve1, linestyle='-', label="Simulation", color='orange')
 
 ax.legend(prop={"size": 8}, loc="best")
 
@@ -226,6 +206,26 @@ btn_pp.pack(side='left')
 btn_clr = tk.Button(root, text="Clear", command=clear_position)
 btn_clr.pack(side='left')
 
+# x, y
+lbl_x = tk.Label(root, text="Range-x")
+lbl_x.pack(side='left')
+var_x = tk.StringVar(root)  # variable for spinbox-value
+var_x.set(range_x_init)  # Initial value
+spn_x = tk.Spinbox(
+    root, textvariable=var_x, format="%.1f", from_=5., to=40., increment=5.,
+    command=lambda: change_range_x(var_x.get()), width=4
+    )
+spn_x.pack(side='left')
+lbl_y = tk.Label(root, text="Range-y")
+lbl_y.pack(side='left')
+var_y = tk.StringVar(root)  # variable for spinbox-value
+var_y.set(range_y_init)  # Initial value
+spn_y = tk.Spinbox(
+    root, textvariable=var_y, format="%.1f", from_=1., to=20.0, increment=1.,
+    command=lambda: change_range_y(var_y.get()), width=4
+    )
+spn_y.pack(side='left')
+
 # k (spring constant)
 label_k = tk.Label(root, text="k(Spring constant)")
 label_k.pack(side='left')
@@ -243,7 +243,7 @@ label_m.pack(side='left')
 var_m = tk.StringVar(root)  # variable for spinbox-value
 var_m.set(mass_init)  # Initial value
 s_m = tk.Spinbox(
-    root, textvariable=var_m, format="%.1f", from_=1., to=200., increment=1.,
+    root, textvariable=var_m, format="%.1f", from_=1., to=400., increment=1.,
     command=lambda: change_mass(var_m.get()), width=4
     )
 s_m.pack(side='left')
