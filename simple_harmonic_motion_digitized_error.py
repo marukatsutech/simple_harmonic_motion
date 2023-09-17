@@ -11,7 +11,9 @@ import tkinter as tk
 def change_range_x(value):
     global x_min, x_max
     x_max = float(value)
+    x_min = -amplitude * 1.4
     ax.set_xlim(x_min, x_max)
+    tx_step.set_position([x_min, y_max * 0.95])
 
 
 def change_range_y(value):
@@ -23,14 +25,17 @@ def change_range_y(value):
 
 
 def change_amp(value):
-    global amplitude, y_ball0, y_ball1, y_dot0, circle
+    global amplitude, y_ball1, y_dot0, circle, radius_ball, radius_dot
     amplitude = float(value)
     print(amplitude)
-    y_ball0 = amplitude
     y_ball1 = amplitude
-    y_dot0 = y_ball0
+    y_dot0 = amplitude
     update_ball()
-    circle.radius = y_ball0
+    circle.radius = amplitude
+    radius_ball = amplitude * 0.05
+    radius_dot = radius_ball
+    ball1.radius = radius_ball
+    dot0.radius = radius_dot
 
 
 def change_k(value):
@@ -46,24 +51,23 @@ def change_mass(value):
 
 
 def clear_position():
-    global is_play, cnt, tx_step, y_ball0, y_ball1, v_ball1, x_dot0, y_dot0
+    global is_play, cnt, tx_step, y_ball1, v_ball1, x_dot0, y_dot0
     is_play = False
     cnt = 0
     tx_step.set_text("Step=" + str(cnt))
-    y_ball0 = amplitude
     y_ball1 = amplitude
     v_ball1 = 0.
     x_dot0 = 0.
-    y_dot0 = y_ball0
+    y_dot0 = amplitude
     update_ball()
 
 
 def update_ball():
-    global y_ball0, y_ball1, ball0, ball1, x_dot0, y_dot0, line1
-    ball0.set_center([x_ball0, y_ball0])
+    global y_ball1, ball1, x_dot0, y_dot0, line_ball1, line_dot0
     ball1.set_center([x_ball1, y_ball1])
     dot0.set_center([x_dot0, y_dot0])
-    line1.set_data([x_ball1, x_ball1], [0., y_ball1])
+    line_ball1.set_data([x_ball1, x_ball1], [0., y_ball1])
+    line_dot0.set_data([0., x_dot0], [y_dot0, y_dot0])
 
 
 def next_generation_ball1():
@@ -72,11 +76,6 @@ def next_generation_ball1():
     a = force / mass
     v_ball1 = v_ball1 + a
     y_ball1 = y_ball1 + v_ball1
-
-
-def next_generation_ball0():
-    global y_ball0
-    y_ball0 = amplitude * np.cos(omega * cnt)
 
 
 def next_generation_dot0():
@@ -104,12 +103,11 @@ def update(f):
         tx_step.set_text("Step=" + str(cnt))
         cnt += 1
         next_generation_dot0()
-        next_generation_ball0()
         next_generation_ball1()
         update_ball()
         y_curve0_roll = np.roll(y_curve0, 1)
         y_curve0 = y_curve0_roll
-        y_curve0[0] = y_ball0
+        y_curve0[0] = y_dot0
         curve0.set_ydata(y_curve0)
         y_curve1_roll = np.roll(y_curve1, 1)
         y_curve1 = y_curve1_roll
@@ -137,17 +135,15 @@ omega = np.sqrt(k/mass)
 amplitude = 4.
 x_min = -amplitude * 1.4
 
-x_ball0 = 0.
-y_ball0 = amplitude
 x_dot0 = 0.
-y_dot0 = y_ball0
+y_dot0 = amplitude
 
-x_ball1 = - amplitude * 1.2
+x_ball1 = 0.
 y_ball1 = amplitude
 v_ball1 = 0.
 
-radius_ball = 0.5
-radius_dot = radius_ball / 2.
+radius_ball = amplitude * 0.05
+radius_dot = radius_ball
 
 # Animation control
 cnt = 0
@@ -169,23 +165,22 @@ ax.grid()
 tx_step = ax.text(x_min, y_max * 0.95, "Step=" + str(0))
 
 # Graphic items
-circle = patches.Circle(xy=(0., 0.), radius=amplitude, color='gray', fill=False)
+circle = patches.Circle(xy=(0., 0.), radius=amplitude, color='orange', fill=False)
 ax.add_patch(circle)
-dot0 = patches.Circle(xy=(x_dot0, y_dot0), radius=radius_dot, color='gray')
+dot0 = patches.Circle(xy=(x_dot0, y_dot0), radius=radius_dot, color='orange')
 ax.add_patch(dot0)
 
-ball0 = patches.Circle(xy=(x_ball0, y_ball0), radius=radius_ball, color='blue')
-ax.add_patch(ball0)
-ball1 = patches.Circle(xy=(x_ball1, y_ball1), radius=radius_ball, color='orange')
+ball1 = patches.Circle(xy=(x_ball1, y_ball1), radius=radius_ball, color='blue')
 ax.add_patch(ball1)
 
-line1, = ax.plot([x_ball1, x_ball1], [0., y_ball1], color='orange')
+line_ball1, = ax.plot([x_ball1, x_ball1], [0., y_ball1], color='blue', linestyle='--')
+line_dot0, = ax.plot([0, x_dot0], [y_dot0, y_dot0], linewidth=1, color='orange', linestyle='-.')
 
 x_curve = np.linspace(0, x_max, 500)
 y_curve0 = x_curve * 0.
-curve0, = ax.plot(x_curve, y_curve0, linestyle='-', label="y=A*cos(omega*step)", color='blue')
+curve0, = ax.plot(x_curve, y_curve0, linestyle='-', label="y=A*cos(omega*step)", color='orange')
 y_curve1 = x_curve * 0.
-curve1, = ax.plot(x_curve, y_curve1, linestyle='-', label="Simulation", color='orange')
+curve1, = ax.plot(x_curve, y_curve1, linestyle='-', label="Simulation", color='blue')
 
 ax.legend(prop={"size": 8}, loc="best")
 
