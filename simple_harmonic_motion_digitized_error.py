@@ -255,6 +255,6 @@ s_amp = tk.Spinbox(
 s_amp.pack(side='left')
 
 # Draw animation
-anim = animation.FuncAnimation(fig, update, interval=100)
+anim = animation.FuncAnimation(fig, update, interval=100, save_count=100)
 root.bind('<Configure>', on_change_window)
 root.mainloop()
